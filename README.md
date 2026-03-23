@@ -115,3 +115,4 @@ MIT, do whatever you want with it.
 ---
 
 *If this crab made you exhale through your nose, a star would make its day.*
+https://github.com/Hyudoro/crab-critic
