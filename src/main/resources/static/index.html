@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crab Critic — A crab judges your landing page</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: #faf9f6; color: #2c2c2a; min-height: 100vh; display: flex; justify-content: center; padding: 40px 16px; }
+        .app { max-width: 560px; width: 100%; }
+        h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+        .sub { font-size: 14px; color: #888780; margin-bottom: 24px; }
+        .input-row { display: flex; gap: 8px; margin-bottom: 16px; }
+        .input-row input { flex: 1; padding: 10px 14px; font-size: 14px; border: 1px solid #d3d1c7; border-radius: 8px; background: #fff; font-family: inherit; outline: none; }
+        .input-row input:focus { border-color: #888780; }
+        .input-row button { padding: 10px 20px; font-size: 14px; font-weight: 500; border: 1px solid #d3d1c7; border-radius: 8px; background: #fff; cursor: pointer; font-family: inherit; }
+        .input-row button:hover { background: #f1efe8; }
+        .input-row button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .roast-row { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; font-size: 13px; color: #888780; }
+        .roast-row input[type=range] { flex: 1; accent-color: #E8734A; }
+        .roast-label { min-width: 110px; text-align: right; font-weight: 500; font-size: 12px; }
+        .result { display: none; }
+        .result.show { display: block; animation: fadeIn 0.3s ease; }
+        .scene { background: #fff; border: 1px solid #e8e6e0; border-radius: 12px; padding: 24px; position: relative; overflow: hidden; }
+        .crab-wrap { display: flex; justify-content: center; padding: 8px 0; }
+        .crab-wrap svg { max-width: 240px; height: auto; }
+        .bwc { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        .bw { position: absolute; font-size: 11px; font-family: monospace; padding: 3px 8px; border-radius: 6px; background: #faeeda; color: #854f0b; opacity: 0.6; white-space: nowrap; }
+        .bubble { position: relative; background: #faf9f6; border: 1px solid #d3d1c7; border-radius: 12px; padding: 14px 18px; font-size: 14px; font-style: italic; line-height: 1.5; max-width: 480px; margin: 14px auto 0; }
+        .meta { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+        .tag { display: inline-block; padding: 3px 10px; font-size: 11px; border-radius: 6px; }
+        .tag-tone { background: #e6f1fb; color: #0c447c; }
+        .tag-cliche { background: #faeeda; color: #854f0b; }
+        .vibe { text-align: center; margin-top: 10px; font-size: 13px; color: #888780; }
+        .loading { display: none; text-align: center; padding: 40px 0; font-size: 14px; color: #888780; }
+        .loading.show { display: block; }
+        .error { display: none; text-align: center; padding: 20px; background: #fcebeb; border-radius: 8px; color: #791f1f; font-size: 13px; margin-bottom: 16px; }
+        .error.show { display: block; }
+        .footer { margin-top: 32px; text-align: center; font-size: 12px; color: #b4b2a9; line-height: 1.8; }
+        .footer a { color: #185fa5; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <h1>Crab Critic</h1>
+        <p class="sub">Paste a landing page URL. A crab will judge it.</p>
+
+        <div class="input-row">
+            <input type="text" id="url" placeholder="https://example.com" />
+            <button id="btn" onclick="roast()">Roast it</button>
+        </div>
+
+        <div class="roast-row">
+            <span>Polite</span>
+            <input type="range" id="level" min="1" max="5" value="3" step="1"
+                   oninput="document.getElementById('rl').textContent=
+                   ['Polite','Friendly','Snarky','Savage','Senior Emacs monk'][this.value-1]">
+            <span class="roast-label" id="rl">Snarky</span>
+        </div>
+
+        <div class="error" id="error"></div>
+        <div class="loading" id="loading">The crab is reading your website with growing concern...</div>
+        <div class="result" id="result"></div>
+
+        <div class="footer">
+            <a href="https://github.com/YOUR-USERNAME/crab-critic" target="_blank">github.com/YOUR-USERNAME/crab-critic</a><br>
+            <span style="font-style: italic; font-size: 11px;">if this crab made you exhale through your nose, a little star would make its day</span>
+        </div>
+    </div>
+
+    <script>
+    async function roast() {
+        const url = document.getElementById('url').value.trim();
+        if (!url) return;
+
+        const btn = document.getElementById('btn');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+        const error = document.getElementById('error');
+
+        btn.disabled = true;
+        error.classList.remove('show');
+        result.classList.remove('show');
+        loading.classList.add('show');
+
+        try {
+            const res = await fetch('/api/roast', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    url: url,
+                    roastLevel: parseInt(document.getElementById('level').value)
+                })
+            });
+
+            const data = await res.json();
+            loading.classList.remove('show');
+
+            const bwHtml = (data.buzzwords || []).map((w, i) => {
+                const positions = [
+                    'top:5%;left:3%','top:3%;right:4%','top:18%;left:1%','top:15%;right:2%',
+                    'top:34%;left:0%','top:38%;right:1%','top:54%;left:2%','top:56%;right:3%'
+                ];
+                const pos = positions[i % positions.length];
+                const dur = (2 + Math.random() * 2).toFixed(1);
+                const delay = (Math.random() * 2).toFixed(1);
+                return `<div class="bw" style="${pos};animation:float ${dur}s ease-in-out infinite;animation-delay:${delay}s">${w}</div>`;
+            }).join('');
+
+            const clHtml = (data.cliches || []).map(c => `<span class="tag tag-cliche">${c}</span>`).join('');
+
+            result.innerHTML = `
+                <div class="scene">
+                    <div class="bwc">${bwHtml}</div>
+                    <div class="crab-wrap">${data.svg || ''}</div>
+                    <div class="bubble">"${data.reaction || 'The crab is speechless.'}"</div>
+                    <div class="meta">
+                        <span class="tag tag-tone">${data.tone || 'unknown'}</span>
+                        ${clHtml}
+                    </div>
+                    <div class="vibe">${data.vibe || ''}</div>
+                </div>`;
+            result.classList.add('show');
+
+        } catch (e) {
+            loading.classList.remove('show');
+            error.textContent = 'The crab encountered an error: ' + e.message;
+            error.classList.add('show');
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    // Enter key submits
+    document.getElementById('url').addEventListener('keydown', e => {
+        if (e.key === 'Enter') roast();
+    });
+    </script>
+</body>
+</html>
