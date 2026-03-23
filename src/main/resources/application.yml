@@ -1,0 +1,19 @@
+server:
+  port: 8080
+
+crab:
+  claude:
+    api-key: ${CRAB_CLAUDE_API_KEY:your-api-key-here}
+    model: claude-sonnet-4-20250514 #the better the model, the more absolute cinema the roast.
+
+  # Max roasts per day across ALL users (burst protection, resets daily)
+  daily-limit: 100
+
+  # HARD DOLLAR CAP, the crab stops permanently when this is spent.
+  # $2.00 = ~330 roasts. Delete crab-budget.txt to reset.
+  # What did you expected from me lmao.
+  budget-dollars: 2.0
+
+logging:
+  level:
+    dev.crabcritic: INFO
