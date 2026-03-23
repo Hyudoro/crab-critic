@@ -110,7 +110,7 @@ src/main/resources/
 
 ## License
 
-MIT, do whatever you want with it.
+GNU, do whatever you want with it.
 
 ---
 
