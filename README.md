@@ -29,7 +29,7 @@ URL → jsoup scrape → Claude analysis → SVG crab → JSON response
 
 ```bash
 # Clone
-git clone https://github.com/YOUR-USERNAME/crab-critic.git
+git clone https://github.com/Hyudoro/crab-critic.git
 cd crab-critic
 
 # Set your API key
@@ -110,7 +110,7 @@ src/main/resources/
 
 ## License
 
-GNU, do whatever you want with it.
+GPL-3.0-only — see [LICENSE](LICENSE).
 
 ---
 
